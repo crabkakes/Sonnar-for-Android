@@ -17,7 +17,7 @@ The free APK (GitHub Releases) and the Play Store build must be signed with the 
    - `RFS_KEY_ALIAS` (`rfs` if you used the command above)
    - `RFS_KEY_PASSWORD`
 
-   The fifth value, `RFS_KEYSTORE_PATH`, is not a secret. The workflow sets it to `$RUNNER_TEMP/rfs.jks` after decoding the keystore there.
+   The fifth value, `RFS_KEYSTORE_PATH`, is not a secret. The workflow sets it to `$RUNNER_TEMP/rfs.jks`. All five values are visible only to the Gradle build step, which decodes the keystore, builds, and deletes it.
 4. In Play Console, open App signing and choose **Use your own key**. Upload `rfs.jks` with Google's PEPK tool **before the first release**.
 
 > **This is permanent.** The key and the Android package name (`APP_ID` in `app.config.ts`) cannot be changed after the first store upload. Decide both before you upload anything.
@@ -26,9 +26,9 @@ Local builds without the `RFS_*` variables fall back to debug signing, so `npx e
 
 ## 2. Releasing Android
 
-1. Bump `version` in `app.config.ts` and `package.json`, and set `android.versionCode` (it must increase on every Play upload; add it to the `android` block of `app.config.ts` if it isn't there yet).
+1. Bump `version` in `app.config.ts` and `package.json`, and increase `android.versionCode` in `app.config.ts` (it must increase on every Play upload).
 2. Commit, then tag and push: `git tag vX.Y.Z && git push origin vX.Y.Z`.
-3. The `Release` workflow tests, builds, and signs the app, then creates a GitHub release with `remote-for-sonarr-vX.Y.Z.apk` attached.
+3. The `Release` workflow lints, tests, builds, and signs the app, then creates a GitHub release with `remote-for-sonarr-vX.Y.Z.apk` attached.
 4. Download the `remote-for-sonarr-aab` artifact from the workflow run and upload the `.aab` to Play Console.
 
 ## 3. Releasing iOS (on the Mac)
@@ -61,7 +61,8 @@ The app collects no data. It talks only to the Sonarr server the user enters.
 The owner does this on their iPhone with a dev build (`npx expo run:ios --device` on the Mac). The friend repeats it on Android with a locally built APK. Record results in the PR.
 
 - [ ] The Local Network prompt appears with the app's text, and connecting via `http://<LAN IP>:8989` works.
-- [ ] Connecting via the VPN (hostname or IP) works.
+- [ ] Connecting via the VPN by IP works.
+- [ ] Connecting via a VPN hostname over plain `http://` works (for example a Tailscale MagicDNS name like `http://nas.tailnet-name.ts.net:8989`, or `http://nas.lan:8989`). On iOS this checks that ATS allows HTTP to arbitrary hosts.
 - [ ] Kill and reopen the app: you stay connected, screens show cached data instantly, then refresh.
 - [ ] Turn Wi-Fi/VPN off with the app open: the stale banner appears, cached data stays, and nothing crashes.
 - [ ] Add a show, search an episode, pick and grab a release, remove a queue item with block, and check each against the Sonarr web UI.
