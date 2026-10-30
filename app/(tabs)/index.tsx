@@ -104,7 +104,7 @@ export default function ShowsScreen() {
     empty = (
       <View style={styles.emptyWrap}>
         <Text style={[styles.emptyTitle, { color: theme.text }]}>No shows yet</Text>
-        <Pressable accessibilityRole="button" accessibilityLabel="Add a show" onPress={() => router.push('/add' as never)} style={[styles.btn, { backgroundColor: theme.accent }]}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Add a show" onPress={() => router.push('/add')} style={[styles.btn, { backgroundColor: theme.accent }]}>
           <Text style={styles.btnText}>Add a show</Text>
         </Pressable>
       </View>
@@ -145,7 +145,7 @@ export default function ShowsScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         contentContainerStyle={{ paddingBottom: 96 }}
       />
-      <Pressable accessibilityRole="button" accessibilityLabel="Add show" onPress={() => router.push('/add' as never)} style={[styles.fab, { backgroundColor: theme.accent }]}>
+      <Pressable accessibilityRole="button" accessibilityLabel="Add show" onPress={() => router.push('/add')} style={[styles.fab, { backgroundColor: theme.accent }]}>
         <Ionicons name="add" size={28} color="#ffffff" />
       </Pressable>
     </Screen>
