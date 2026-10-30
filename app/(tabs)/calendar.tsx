@@ -5,6 +5,7 @@ import { getCalendars } from 'expo-localization';
 import { useRouter } from 'expo-router';
 import { userMessage } from '../../src/api/errors';
 import type { Episode } from '../../src/api/types';
+import { episodeCode } from '../../src/domain/format';
 import { buildWeek, groupByLocalDay, localDayKey, type FirstWeekday } from '../../src/domain/calendar';
 import { episodeStatus } from '../../src/domain/series';
 import { useSonarrQuery } from '../../src/query/hooks';
@@ -30,8 +31,6 @@ function deviceCalendar(): { firstWeekday: FirstWeekday; tz: string } {
   };
 }
 
-const code = (e: Episode) =>
-  `S${String(e.seasonNumber).padStart(2, '0')}E${String(e.episodeNumber).padStart(2, '0')}`;
 
 export default function CalendarScreen() {
   const theme = useTheme();
@@ -159,7 +158,7 @@ export default function CalendarScreen() {
                 <View style={styles.rowBody}>
                   <Text numberOfLines={1} style={[styles.title, { color: theme.text }]}>{title}</Text>
                   <Text numberOfLines={1} style={{ color: theme.muted, fontSize: 13 }}>
-                    {code(item)}{item.title ? ` · ${item.title}` : ''}
+                    {episodeCode(item)}{item.title ? ` · ${item.title}` : ''}
                   </Text>
                   <View style={styles.meta}>
                     <Text style={{ color: theme.muted, fontSize: 13 }}>{timeFmt.format(new Date(item.airDateUtc!)).replace(/[  ]/g, ' ')}</Text>

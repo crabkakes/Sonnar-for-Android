@@ -1,16 +1,17 @@
 import type { QueueItem } from '../api/types';
-import { formatBytes } from './format';
+import { episodeCode, formatBytes } from './format';
+
+export type QueueStatusLabel = 'Downloading' | 'Queued' | 'Paused' | 'Importing' | 'Import pending' | 'Completed' | 'Failed';
 
 export type QueueItemView = {
   title: string;
+  status: QueueStatusLabel;
   subtitle: string;
   progress: number | null;
   timeLeft: string | null;
   tone: 'normal' | 'warning' | 'error';
   messages: string[];
 };
-
-const pad = (n: number) => String(n).padStart(2, '0');
 
 /** Sonarr timeleft ('hh:mm:ss' or 'd.hh:mm:ss') to '4 min' / '1 h 30 min' / '1 d 2 h'. */
 function formatTimeLeft(raw?: string): string | null {
@@ -22,10 +23,27 @@ function formatTimeLeft(raw?: string): string | null {
   return min > 0 ? `${min} min` : '< 1 min';
 }
 
+/**
+ * One short label for where a queue item is. Sonarr's `trackedDownloadState` wins once the download
+ * client is done (import stages), otherwise the download client `status` decides.
+ */
+export function queueStatusLabel(q: Pick<QueueItem, 'status' | 'trackedDownloadState'>): QueueStatusLabel {
+  const state = q.trackedDownloadState?.toLowerCase();
+  const status = q.status?.toLowerCase();
+  if (state === 'importing') return 'Importing';
+  if (state === 'importpending' || state === 'importblocked') return 'Import pending';
+  if (state === 'imported') return 'Completed';
+  if (state === 'failed' || state === 'failedpending' || status === 'failed') return 'Failed';
+  if (status === 'paused') return 'Paused';
+  if (status === 'queued' || status === 'delay') return 'Queued';
+  if (status === 'completed') return 'Completed';
+  return 'Downloading';
+}
+
 export function queueItemView(q: QueueItem): QueueItemView {
   const e = q.episode;
   const parts = [
-    e ? `S${pad(e.seasonNumber)}E${pad(e.episodeNumber)}` : null,
+    e ? episodeCode(e) : null,
     q.quality?.quality?.name ?? null,
     q.size ? formatBytes(q.size) : null,
   ].filter((p): p is string => !!p);
@@ -36,6 +54,7 @@ export function queueItemView(q: QueueItem): QueueItemView {
   const tone = q.trackedDownloadStatus === 'error' || q.errorMessage ? 'error' : q.trackedDownloadStatus === 'warning' ? 'warning' : 'normal';
   return {
     title: q.series?.title || q.title,
+    status: queueStatusLabel(q),
     subtitle: parts.join(' · '),
     progress,
     timeLeft: formatTimeLeft(q.timeleft),

@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { userMessage } from '../../src/api/errors';
 import type { Episode, Series } from '../../src/api/types';
-import { formatAirTime } from '../../src/domain/format';
+import { episodeCode, formatAirTime } from '../../src/domain/format';
 import { episodeStatus, groupSeasons, type SeasonGroup } from '../../src/domain/series';
 import { useSonarrMutation, useSonarrQuery } from '../../src/query/hooks';
 import { SampleBanner, StaleBanner } from '../../src/ui/Banners';
@@ -14,8 +14,6 @@ import { useTheme } from '../../src/ui/theme';
 import { useLayout } from '../../src/ui/useLayout';
 
 type Target = { kind: 'episode'; episode: Episode } | { kind: 'season'; season: SeasonGroup };
-
-const epCode = (e: Episode) => `${e.seasonNumber}x${String(e.episodeNumber).padStart(2, '0')}`;
 
 function StatusChip({ episode, now }: { episode: Episode; now: Date }) {
   const theme = useTheme();
@@ -130,7 +128,7 @@ export default function SeriesDetailScreen() {
     );
   }
 
-  const sheetTitle = target?.kind === 'episode' ? epCode(target.episode) : target?.season.title;
+  const sheetTitle = target?.kind === 'episode' ? episodeCode(target.episode) : target?.season.title;
   const targetMonitored = target?.kind === 'episode' ? target.episode.monitored : target?.season.monitored;
 
   return (
@@ -173,12 +171,12 @@ export default function SeriesDetailScreen() {
         )}
         renderItem={({ item }) => (
           <View style={[styles.epRow, { borderColor: theme.border }]}>
-            <Text style={{ color: theme.muted, width: 48 }}>{epCode(item)}</Text>
+            <Text style={{ color: theme.muted, width: 64 }}>{episodeCode(item)}</Text>
             <View style={styles.epBody}>
               <Text numberOfLines={1} style={{ color: theme.text, fontSize: 15 }}>{item.title || 'TBA'}</Text>
               <StatusChip episode={item} now={now} />
             </View>
-            <Pressable accessibilityRole="button" accessibilityLabel={`Actions for episode ${epCode(item)}`} onPress={() => setTarget({ kind: 'episode', episode: item })} style={styles.icon}>
+            <Pressable accessibilityRole="button" accessibilityLabel={`Actions for episode ${episodeCode(item)}`} onPress={() => setTarget({ kind: 'episode', episode: item })} style={styles.icon}>
               <Ionicons name="ellipsis-horizontal" size={22} color={theme.text} />
             </Pressable>
           </View>

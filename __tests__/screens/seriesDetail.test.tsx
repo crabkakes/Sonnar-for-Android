@@ -61,7 +61,7 @@ describe('series detail', () => {
 
   it('episode search calls searchEpisodes([id]) and shows "Search started"', async () => {
     const r = await open();
-    await fireEvent.press(screen.getByRole('button', { name: 'Actions for episode 2x01' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Actions for episode S02E01' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Search' }));
     await waitFor(() => expect(r.api.searchEpisodes).toHaveBeenCalledWith([20]));
     expect(await screen.findByText('Search started')).toBeTruthy();
@@ -76,7 +76,7 @@ describe('series detail', () => {
 
   it('"Pick a release" on episode navigates to /releases?episodeId=', async () => {
     await open();
-    await fireEvent.press(screen.getByRole('button', { name: 'Actions for episode 2x01' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Actions for episode S02E01' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Pick a release' }));
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/releases', params: { episodeId: 20, seriesId: 5 } });
   });
@@ -100,7 +100,7 @@ describe('series detail', () => {
 
   it('toggle episode monitored calls setEpisodesMonitored', async () => {
     const r = await open();
-    await fireEvent.press(screen.getByRole('button', { name: 'Actions for episode 2x01' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Actions for episode S02E01' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Unmonitor' }));
     await waitFor(() => expect(r.api.setEpisodesMonitored).toHaveBeenCalledWith([20], false));
   });

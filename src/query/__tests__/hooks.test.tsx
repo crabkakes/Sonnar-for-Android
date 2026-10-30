@@ -35,6 +35,32 @@ test('isStale true after a failed refetch with cached data', async () => {
   expect(screen.getByText("Can't reach Sonarr — showing saved data")).toBeTruthy();
 });
 
+test('stale banner hides once the active query reconnects, even if an inactive query still holds an old error', async () => {
+  const getSeries = jest
+    .fn()
+    .mockResolvedValueOnce([{ id: 1 } as Series])
+    .mockRejectedValueOnce(new SonarrError('unreachable'))
+    .mockResolvedValueOnce([{ id: 1 } as Series, { id: 2 } as Series]);
+  const { client } = await renderWithProviders(<SeriesProbe />, { api: { getSeries } });
+  await screen.findByText('count:1 stale:false');
+
+  // A query from a screen that is no longer mounted: cached data, last fetch unreachable, no observers.
+  const inactive = client.getQueryCache().build(client, { queryKey: ['other-screen', 'calendar'] });
+  await act(async () => {
+    inactive.setState({ data: [], dataUpdatedAt: 1, error: new SonarrError('unreachable'), status: 'error' });
+  });
+  expect(inactive.getObserversCount()).toBe(0);
+  expect(screen.queryByText("Can't reach Sonarr — showing saved data")).toBeNull();
+
+  await fireEvent.press(screen.getByText('refetch'));
+  await screen.findByText('count:1 stale:true');
+  expect(screen.getByText("Can't reach Sonarr — showing saved data")).toBeTruthy();
+
+  await fireEvent.press(screen.getByText('refetch'));
+  await screen.findByText('count:2 stale:false');
+  expect(screen.queryByText("Can't reach Sonarr — showing saved data")).toBeNull();
+});
+
 function MutationProbe() {
   const m = useSonarrMutation((api, id: number) => api.searchEpisodes([id]), {
     successMessage: 'Search started',

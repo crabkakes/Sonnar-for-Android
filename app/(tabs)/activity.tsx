@@ -3,7 +3,7 @@ import { ActivityIndicator, FlatList, Modal, Pressable, StyleSheet, Switch, Text
 import { useIsFocused } from 'expo-router';
 import { userMessage } from '../../src/api/errors';
 import type { HistoryItem, QueueItem } from '../../src/api/types';
-import { formatRelative } from '../../src/domain/format';
+import { episodeCode, formatRelative } from '../../src/domain/format';
 import { historyEventLabel, queueItemView } from '../../src/domain/queue';
 import { useSonarrInfiniteQuery, useSonarrMutation, useSonarrQuery } from '../../src/query/hooks';
 import { SampleBanner, StaleBanner } from '../../src/ui/Banners';
@@ -18,8 +18,7 @@ const POLL_MS = 5000;
 type RemoveRequest = { id: number; blocklist: boolean };
 type RemoveVars = RemoveRequest & { removeFromClient: boolean };
 
-const code = (e?: { seasonNumber: number; episodeNumber: number }) =>
-  e ? `S${String(e.seasonNumber).padStart(2, '0')}E${String(e.episodeNumber).padStart(2, '0')}` : '';
+const code = (e?: { seasonNumber: number; episodeNumber: number }) => (e ? episodeCode(e) : '');
 
 function toneColor(theme: Theme, tone: 'normal' | 'warning' | 'error') {
   return tone === 'error' ? theme.danger : tone === 'warning' ? theme.warning : theme.muted;
@@ -30,7 +29,12 @@ function QueueRow({ item, onRemove }: { item: QueueItem; onRemove: (r: RemoveReq
   const v = queueItemView(item);
   return (
     <View testID={`queue-row-${item.id}`} style={[styles.row, { borderColor: theme.border }]}>
-      <Text numberOfLines={1} style={[styles.title, { color: theme.text }]}>{v.title}</Text>
+      <View style={styles.between}>
+        <Text numberOfLines={1} style={[styles.title, styles.shrink, { color: theme.text }]}>{v.title}</Text>
+        <Text testID={`queue-status-${item.id}`} style={{ color: v.status === 'Failed' ? theme.danger : theme.accent, fontWeight: '600', fontSize: 13 }}>
+          {v.status}
+        </Text>
+      </View>
       {v.subtitle ? <Text numberOfLines={1} style={{ color: theme.muted, fontSize: 13 }}>{v.subtitle}</Text> : null}
       {v.progress !== null ? (
         <View style={[styles.track, { backgroundColor: theme.border }]}>
@@ -245,6 +249,7 @@ const styles = StyleSheet.create({
   segment: { flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
   row: { paddingHorizontal: 16, paddingVertical: 10, gap: 4, borderBottomWidth: StyleSheet.hairlineWidth },
   title: { fontSize: 16, fontWeight: '600' },
+  shrink: { flexShrink: 1 },
   track: { height: 6, borderRadius: 3, overflow: 'hidden' },
   actions: { flexDirection: 'row', gap: 8 },
   action: { minHeight: 44, minWidth: 44, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center' },

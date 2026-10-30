@@ -19,6 +19,12 @@ export function formatAirTime(iso: string, now: Date, tz?: string): string {
   return new Intl.DateTimeFormat(undefined, { timeZone: tz, month: 'short', day: 'numeric' }).format(at);
 }
 
+/** The one episode code format used on every screen: 'S01E02'. */
+export function episodeCode(e: { seasonNumber: number; episodeNumber: number }): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `S${pad(e.seasonNumber)}E${pad(e.episodeNumber)}`;
+}
+
 export function formatBytes(n?: number): string {
   if (n === undefined || n === null || Number.isNaN(n)) return '—';
   if (n < 1024) return `${Math.round(n)} B`;

@@ -5,7 +5,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { userMessage } from '../src/api/errors';
 import type { Release } from '../src/api/types';
 import { useConnection } from '../src/connection/ConnectionProvider';
-import { formatBytes } from '../src/domain/format';
+import { episodeCode, formatBytes } from '../src/domain/format';
 import {
   filterReleases,
   formatAge,
@@ -27,8 +27,6 @@ const SORTS: { key: ReleaseSort; label: string }[] = [
   { key: 'seeders', label: 'Seeders' },
   { key: 'age', label: 'Age' },
 ];
-
-const pad = (n: number) => String(n).padStart(2, '0');
 
 function Chip({ label, on, onPress }: { label: string; on: boolean; onPress: () => void }) {
   const theme = useTheme();
@@ -136,7 +134,7 @@ export default function ReleasesScreen() {
   });
   const episode = episodesQ.data?.find((e) => e.id === episodeId);
   const what = episodeId !== undefined
-    ? episode ? `S${pad(episode.seasonNumber)}E${pad(episode.episodeNumber)}` : undefined
+    ? episode ? episodeCode(episode) : undefined
     : seasonNumber !== undefined ? `Season ${seasonNumber}` : undefined;
   const title = [seriesQ.data?.title, what].filter(Boolean).join(' · ') || 'Releases';
 

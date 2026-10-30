@@ -1,8 +1,31 @@
 import type { QueueItem } from '../../api/types';
 import { formatRelative } from '../format';
-import { historyEventLabel, queueItemView } from '../queue';
+import { historyEventLabel, queueItemView, queueStatusLabel } from '../queue';
 
 const base: QueueItem = { id: 1, title: 'Show.S01E02.1080p', status: 'downloading' };
+
+describe('queueStatusLabel', () => {
+  it.each([
+    [{ status: 'downloading', trackedDownloadState: 'downloading' }, 'Downloading'],
+    [{ status: 'queued' }, 'Queued'],
+    [{ status: 'delay' }, 'Queued'],
+    [{ status: 'paused', trackedDownloadState: 'downloading' }, 'Paused'],
+    [{ status: 'completed', trackedDownloadState: 'importing' }, 'Importing'],
+    [{ status: 'completed', trackedDownloadState: 'importPending' }, 'Import pending'],
+    [{ status: 'completed', trackedDownloadState: 'importBlocked' }, 'Import pending'],
+    [{ status: 'completed', trackedDownloadState: 'imported' }, 'Completed'],
+    [{ status: 'completed' }, 'Completed'],
+    [{ status: 'failed' }, 'Failed'],
+    [{ status: 'warning', trackedDownloadState: 'failedPending' }, 'Failed'],
+    [{ status: 'somethingNew' }, 'Downloading'],
+  ] as const)('%j -> %s', (item, label) => {
+    expect(queueStatusLabel(item)).toBe(label);
+  });
+
+  it('is part of the row view', () => {
+    expect(queueItemView({ ...base, status: 'paused' }).status).toBe('Paused');
+  });
+});
 
 describe('queueItemView', () => {
   it('normal item', () => {
@@ -18,6 +41,7 @@ describe('queueItemView', () => {
     } as QueueItem);
     expect(v).toEqual({
       title: 'Show',
+      status: 'Downloading',
       subtitle: 'S01E02 · WEBDL-1080p · 1.0 GB',
       progress: 0.5,
       timeLeft: '4 min',
@@ -44,7 +68,7 @@ describe('queueItemView', () => {
 
   it('sparse item: falls back to q.title, null progress, no crash', () => {
     const v = queueItemView(base);
-    expect(v).toEqual({ title: 'Show.S01E02.1080p', subtitle: '', progress: null, timeLeft: null, tone: 'normal', messages: [] });
+    expect(v).toEqual({ title: 'Show.S01E02.1080p', status: 'Downloading', subtitle: '', progress: null, timeLeft: null, tone: 'normal', messages: [] });
   });
 
   it('size 0 gives null progress; sizeleft > size clamps', () => {
