@@ -1,0 +1,6 @@
+{
+  "name": "Sonarr Mobile for Android",
+  "description": "Mobile-optimized Sonarr web interface for Android displays of all sizes with seamless API integration, series management, and live download tracking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
