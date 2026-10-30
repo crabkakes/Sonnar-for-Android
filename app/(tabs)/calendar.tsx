@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getCalendars } from 'expo-localization';
@@ -37,11 +37,11 @@ export default function CalendarScreen() {
   const theme = useTheme();
   const router = useRouter();
   const { maxContentWidth } = useLayout();
-  const { firstWeekday, tz } = useMemo(deviceCalendar, []);
+  const { firstWeekday, tz } = useState(deviceCalendar)[0];
   const [now] = useState(() => new Date());
   const todayKey = localDayKey(now.toISOString(), tz);
-  const [anchor, setAnchor] = useState(now);
-  const [selected, setSelected] = useState(todayKey);
+  const [view, setView] = useState({ anchor: now, selected: todayKey });
+  const { anchor, selected } = view;
 
   const week = useMemo(() => buildWeek(anchor, firstWeekday, tz), [anchor, firstWeekday, tz]);
   const { data, isLoading, error, refetch } = useSonarrQuery(['calendar', week.startUtc], (api) =>
@@ -50,31 +50,26 @@ export default function CalendarScreen() {
   const byDay = useMemo(() => groupByLocalDay(data ?? [], tz), [data, tz]);
   const rows = byDay[selected] ?? [];
 
-  const weekRef = useRef(week);
-  weekRef.current = week;
-  function go(dir: 1 | -1) {
-    const w = weekRef.current;
-    const next = new Date(dir === 1 ? new Date(w.endUtc).getTime() + HALF_DAY : new Date(w.startUtc).getTime() - HALF_DAY);
-    setAnchor(next);
-    setSelected(buildWeek(next, firstWeekday, tz).days[0].key);
-  }
-  const goRef = useRef(go);
-  goRef.current = go;
-  function goToday() {
-    setAnchor(now);
-    setSelected(todayKey);
-  }
-
-  const pan = useMemo(
-    () =>
-      PanResponder.create({
-        onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 20 && Math.abs(g.dx) > Math.abs(g.dy) * 2,
-        onPanResponderRelease: (_, g) => {
-          if (g.dx <= -50) goRef.current(1);
-          else if (g.dx >= 50) goRef.current(-1);
-        },
+  const go = useCallback(
+    (dir: 1 | -1) =>
+      setView((v) => {
+        const w = buildWeek(v.anchor, firstWeekday, tz);
+        const next = new Date(dir === 1 ? new Date(w.endUtc).getTime() + HALF_DAY : new Date(w.startUtc).getTime() - HALF_DAY);
+        return { anchor: next, selected: buildWeek(next, firstWeekday, tz).days[0].key };
       }),
-    [],
+    [firstWeekday, tz],
+  );
+  const goToday = () => setView({ anchor: now, selected: todayKey });
+  const select = (key: string) => setView((v) => ({ ...v, selected: key }));
+
+  const [pan] = useState(() =>
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 20 && Math.abs(g.dx) > Math.abs(g.dy) * 2,
+      onPanResponderRelease: (_, g) => {
+        if (g.dx <= -50) go(1);
+        else if (g.dx >= 50) go(-1);
+      },
+    }),
   );
 
   const monthLabel = new Intl.DateTimeFormat(undefined, { timeZone: 'UTC', month: 'long', year: 'numeric' }).format(
@@ -133,7 +128,7 @@ export default function CalendarScreen() {
                 testID={`day-${d.key}`}
                 accessibilityRole="button"
                 accessibilityState={{ selected: isSel }}
-                onPress={() => setSelected(d.key)}
+                onPress={() => select(d.key)}
                 style={[styles.day, isSel && { backgroundColor: theme.accent }, !isSel && d.key === todayKey && { borderColor: theme.accent, borderWidth: 1 }]}
               >
                 <Text style={{ color: isSel ? '#ffffff' : theme.muted, fontSize: 12 }}>{d.label}</Text>
