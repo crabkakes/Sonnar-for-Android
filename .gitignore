@@ -7,3 +7,10 @@ coverage/
 .env*
 !.env.example
 .superpowers/
+.expo/
+ios/
+android/
+*.keystore
+*.jks
+expo-env.d.ts
+*.tsbuildinfo
