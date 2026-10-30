@@ -2,7 +2,9 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { createLiveApi } from '../api/liveApi';
 import type { ConnectionConfig, SonarrApi } from '../api/types';
 import { createSampleApi } from '../sample/sampleApi';
-import { clearConnection, loadConnection, saveLive, saveSample, type ConnectionState } from './storage';
+import { clearConnection, connectionIdentity, loadConnection, saveLive, saveSample, type ConnectionState } from './storage';
+
+export { connectionIdentity };
 
 export type Connection = {
   state: ConnectionState;
@@ -15,11 +17,6 @@ export type Connection = {
 };
 
 export const ConnectionContext = createContext<Connection | null>(null);
-
-/** Stable identity of a connection; used in query keys so data never mixes between connections. */
-export function connectionIdentity(state: ConnectionState): string {
-  return state.mode === 'live' ? state.config.baseUrl : state.mode === 'sample' ? 'sample' : 'none';
-}
 
 export function ConnectionProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<ConnectionState>({ mode: 'none' });

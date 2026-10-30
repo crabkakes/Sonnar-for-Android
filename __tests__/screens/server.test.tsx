@@ -8,7 +8,11 @@ import { renderWithProviders } from '../../test/render';
 jest.mock('../../src/api/liveApi');
 
 const mockReplace = jest.fn();
-jest.mock('expo-router', () => ({ useRouter: () => ({ replace: mockReplace }) }));
+const mockBack = jest.fn();
+const mockCanGoBack = jest.fn(() => true);
+jest.mock('expo-router', () => ({
+  useRouter: () => ({ replace: mockReplace, back: mockBack, canGoBack: mockCanGoBack }),
+}));
 
 const testConnection = jest.fn();
 beforeEach(() => {
@@ -84,5 +88,48 @@ describe('server screen', () => {
       await buttons.find((b) => b.style === 'destructive')!.onPress!();
     });
     expect(connection.disconnect).toHaveBeenCalled();
+  });
+
+  it('first run has no Close control', async () => {
+    await renderWithProviders(<ServerScreen />, { mode: 'none' });
+    expect(screen.queryByRole('button', { name: 'Close' })).toBeNull();
+  });
+
+  it('opened while connected shows Close, which goes back', async () => {
+    await renderWithProviders(<ServerScreen />, { mode: 'live' });
+    await fireEvent.press(screen.getByRole('button', { name: 'Close' }));
+    expect(mockBack).toHaveBeenCalled();
+    expect(mockReplace).not.toHaveBeenCalled();
+  });
+
+  it('Close falls back to / when there is nothing to go back to', async () => {
+    mockCanGoBack.mockReturnValueOnce(false);
+    await renderWithProviders(<ServerScreen />, { mode: 'sample' });
+    await fireEvent.press(screen.getByRole('button', { name: 'Close' }));
+    expect(mockReplace).toHaveBeenCalledWith('/');
+  });
+
+  it('saving while already connected goes back instead of pushing another (tabs)', async () => {
+    const { connection } = await renderWithProviders(<ServerScreen />, { mode: 'live' });
+    await fill('192.168.1.60:8989', 'new');
+    await fireEvent.press(screen.getByText('Test'));
+    await screen.findByText('Connected to Sonarr 4.0.9');
+    await fireEvent.press(screen.getByText('Save'));
+    await waitFor(() => expect(connection.setLive).toHaveBeenCalled());
+    expect(mockBack).toHaveBeenCalled();
+    expect(mockReplace).not.toHaveBeenCalled();
+  });
+
+  it('a failed disconnect shows a message instead of an unhandled rejection', async () => {
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    const { connection } = await renderWithProviders(<ServerScreen />, { mode: 'live' });
+    (connection.disconnect as jest.Mock).mockRejectedValueOnce(new Error('keychain locked'));
+    await fireEvent.press(screen.getByText('Disconnect'));
+    const buttons = alert.mock.calls[0][2]!;
+    await act(async () => {
+      await buttons.find((b) => b.style === 'destructive')!.onPress!();
+    });
+    expect(screen.getByText('Something went wrong')).toBeTruthy();
+    expect(screen.getByLabelText('Server address').props.value).toBe('http://sonarr.test');
   });
 });

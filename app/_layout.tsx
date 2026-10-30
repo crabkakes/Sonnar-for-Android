@@ -1,4 +1,4 @@
-import { Redirect, Stack } from 'expo-router';
+import { Stack } from 'expo-router';
 import { ActivityIndicator, View } from 'react-native';
 import { ConnectionProvider, useConnection } from '../src/connection/ConnectionProvider';
 import { QueryProvider } from '../src/query/QueryProvider';
@@ -15,8 +15,19 @@ function Gate() {
       </View>
     );
   }
-  if (state.mode === 'none') return <Redirect href={'/server' as never} />;
-  return <Stack screenOptions={{ headerShown: false }} />;
+  // Always render the navigator: child routes (including /server) only mount through it.
+  // Connected routes are guarded, so with no connection the Stack falls back to /server.
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Protected guard={state.mode !== 'none'}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="series/[id]" />
+        <Stack.Screen name="add" />
+        <Stack.Screen name="releases" />
+      </Stack.Protected>
+      <Stack.Screen name="server" />
+    </Stack>
+  );
 }
 
 export default function RootLayout() {

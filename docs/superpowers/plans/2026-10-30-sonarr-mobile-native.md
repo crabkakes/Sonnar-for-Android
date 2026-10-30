@@ -16,7 +16,7 @@
 - Every request goes straight from the phone to the user's Sonarr at `<baseUrl>/api/v3/...` with the `X-Api-Key` header. The API key never goes in a query string, a log, or AsyncStorage.
 - The API key and URL are stored in `expo-secure-store` only.
 - Supports Sonarr major versions 3 and 4 (`/api/v3`). Anything else gets a plain "unsupported version" or "not Sonarr" message.
-- Android allows cleartext HTTP. iOS ATS allows HTTP to arbitrary hosts (`NSAllowsArbitraryLoads: true` + `NSAllowsLocalNetworking: true`) and has an `NSLocalNetworkUsageDescription`.
+- Android allows cleartext HTTP. iOS ATS allows HTTP to arbitrary hosts with `NSAllowsArbitraryLoads: true` only (adding `NSAllowsLocalNetworking` makes iOS 10+ ignore `NSAllowsArbitraryLoads`, which would block VPN/DNS hostnames like Tailscale MagicDNS or `nas.lan`) and has an `NSLocalNetworkUsageDescription`.
 - Self-signed HTTPS isn't supported. A TLS or network failure on an `https://` URL shows the certificate hint.
 - No Sonarr settings screens and no notifications or background tasks. Only one server, and no pause/resume of downloads (Sonarr's API has none).
 - Light and dark themes follow the system setting.
@@ -103,7 +103,7 @@ test('identity', () => {
   expect(c.android.package).toBe('com.remoteforsonarr.app');
 });
 test('ios allows http to user hosts and explains local network', () => {
-  expect(c.ios.infoPlist.NSAppTransportSecurity).toEqual({ NSAllowsArbitraryLoads: true, NSAllowsLocalNetworking: true });
+  expect(c.ios.infoPlist.NSAppTransportSecurity).toEqual({ NSAllowsArbitraryLoads: true });
   expect(c.ios.infoPlist.NSLocalNetworkUsageDescription).toMatch(/Sonarr server on your home network or VPN/);
 });
 test('android allows cleartext via expo-build-properties', () => {

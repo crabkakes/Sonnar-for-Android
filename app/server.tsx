@@ -30,6 +30,8 @@ export default function ServerScreen() {
   const router = useRouter();
   const { state, setLive, setSample, disconnect } = useConnection();
   const live = state.mode === 'live';
+  /** Opened from inside the app (live or sample), as opposed to first run / after Disconnect. */
+  const connected = state.mode !== 'none';
 
   const [url, setUrl] = useState(state.mode === 'live' ? state.config.baseUrl : '');
   const [apiKey, setApiKey] = useState(state.mode === 'live' ? state.config.apiKey : '');
@@ -60,7 +62,9 @@ export default function ServerScreen() {
     setSaving(true);
     try {
       await setLive({ baseUrl: normalizeBaseUrl(url), apiKey: apiKey.trim() });
-      router.replace('/');
+      // Already connected: return to the screen underneath instead of stacking a second (tabs).
+      if (connected) close();
+      else router.replace('/');
     } catch (e) {
       setResult({ status: 'error', ...userMessage(e), tested: current });
     } finally {
@@ -73,6 +77,11 @@ export default function ServerScreen() {
     router.replace('/');
   }
 
+  function close() {
+    if (router.canGoBack()) router.back();
+    else router.replace('/');
+  }
+
   function confirmDisconnect() {
     Alert.alert('Disconnect?', 'This removes the saved server address and API key from this phone.', [
       { text: 'Cancel', style: 'cancel' },
@@ -80,10 +89,14 @@ export default function ServerScreen() {
         text: 'Disconnect',
         style: 'destructive',
         onPress: async () => {
-          await disconnect();
-          setUrl('');
-          setApiKey('');
-          setResult(null);
+          try {
+            await disconnect();
+            setUrl('');
+            setApiKey('');
+            setResult(null);
+          } catch (e) {
+            setResult({ status: 'error', ...userMessage(e), tested: current });
+          }
         },
       },
     ]);
@@ -97,6 +110,13 @@ export default function ServerScreen() {
       style={{ flex: 1, backgroundColor: theme.bg }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      {connected ? (
+        <View style={styles.topBar}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Close" onPress={close} style={styles.close} hitSlop={8}>
+            <Text style={[styles.buttonText, { color: theme.accent }]}>Close</Text>
+          </Pressable>
+        </View>
+      ) : null}
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Text accessibilityRole="header" style={[styles.title, { color: theme.text }]}>
           {live ? 'Server' : 'Connect to Sonarr'}
@@ -181,6 +201,8 @@ export default function ServerScreen() {
 }
 
 const styles = StyleSheet.create({
+  topBar: { flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: 8 },
+  close: { minHeight: 44, minWidth: 44, paddingHorizontal: 8, alignItems: 'center', justifyContent: 'center' },
   content: { padding: 16, paddingTop: 16, gap: 8 },
   title: { fontSize: 24, fontWeight: '700', marginBottom: 8 },
   label: { fontSize: 14, fontWeight: '600', marginTop: 8 },

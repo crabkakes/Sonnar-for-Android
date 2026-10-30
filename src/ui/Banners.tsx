@@ -21,7 +21,11 @@ export function SampleBanner() {
   return <Banner text="Sample data — not connected to a server" color={theme.warning} />;
 }
 
-/** Visible while any query holds data but its latest fetch failed to reach Sonarr. */
+/**
+ * Visible while any query on screen (one with observers) holds data but its latest fetch failed to
+ * reach Sonarr. Inactive queries are ignored: they keep their last error until a screen remounts
+ * them, which would otherwise pin the banner after reconnecting.
+ */
 export function StaleBanner() {
   const client = useQueryClient();
   const theme = useTheme();
@@ -29,6 +33,7 @@ export function StaleBanner() {
     (notify) => client.getQueryCache().subscribe(notify),
     () =>
       client.getQueryCache().getAll().some((q) => {
+        if (q.getObserversCount() === 0) return false;
         const e = q.state.error;
         return q.state.data !== undefined && e instanceof SonarrError && (e.kind === 'unreachable' || e.kind === 'timeout');
       }),

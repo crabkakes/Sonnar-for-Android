@@ -127,11 +127,12 @@ export default function AddScreen() {
   }
 
   const noFolders = foldersQ.data !== undefined && folders.length === 0;
-  const canAdd = !!chosen && !noFolders && profiles.length > 0 && !add.isRunning;
+  const canAdd = !!chosen && !noFolders && opts.rootFolderPath !== '' && profiles.length > 0 && !add.isRunning;
   const addLabel = opts.searchForMissingEpisodes ? 'Add & search' : 'Add';
 
   function renderResult({ item }: { item: LookupSeries }) {
-    const inLibrary = item.id !== undefined;
+    // Sonarr's lookup returns `id: 0` (not undefined) for shows not in the library.
+    const inLibrary = !!item.id;
     return (
       <Pressable
         accessibilityRole="button"

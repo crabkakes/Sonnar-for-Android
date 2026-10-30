@@ -11,13 +11,40 @@ const URL_KEY = 'rfs.baseUrl';
 const KEY_KEY = 'rfs.apiKey';
 const MODE_KEY = 'rfs.mode';
 
-export const cacheKeyFor = (baseUrl: string) => `rfs.cache.${baseUrl}`;
+const CACHE_PREFIX = 'rfs.cache.';
+const ADD_DEFAULTS_PREFIX = 'rfs.addDefaults.';
 
-async function clearSecrets(): Promise<string | null> {
-  const previous = await SecureStore.getItemAsync(URL_KEY);
+/** FNV-1a 32-bit, as 8 hex chars. Short and non-reversible; no dependency. */
+export function hashBaseUrl(baseUrl: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < baseUrl.length; i++) {
+    h ^= baseUrl.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return (h >>> 0).toString(16).padStart(8, '0');
+}
+
+/**
+ * Stable identity of a connection, used in query keys and AsyncStorage keys so data never mixes
+ * between connections. A live connection is a hash of its (already normalized) baseUrl, so the
+ * server address never lands in plain AsyncStorage.
+ */
+export function connectionIdentity(state: ConnectionState): string {
+  return state.mode === 'live' ? hashBaseUrl(state.config.baseUrl) : state.mode;
+}
+
+export const cacheKeyFor = (identity: string) => `${CACHE_PREFIX}${identity}`;
+
+async function clearSecrets(): Promise<void> {
   await SecureStore.deleteItemAsync(URL_KEY);
   await SecureStore.deleteItemAsync(KEY_KEY);
-  return previous;
+}
+
+/** Drops every persisted query cache and every saved add-show default, for any connection. */
+async function clearPerConnectionData(): Promise<void> {
+  const keys = await AsyncStorage.getAllKeys();
+  const doomed = keys.filter((k) => k.startsWith(CACHE_PREFIX) || k.startsWith(ADD_DEFAULTS_PREFIX));
+  if (doomed.length) await AsyncStorage.multiRemove(doomed);
 }
 
 export async function loadConnection(): Promise<ConnectionState> {
@@ -40,14 +67,14 @@ export async function saveLive(c: ConnectionConfig): Promise<void> {
 }
 
 export async function saveSample(): Promise<void> {
-  const previous = await clearSecrets();
-  if (previous) await AsyncStorage.removeItem(cacheKeyFor(previous));
+  await clearSecrets();
+  await clearPerConnectionData();
   await AsyncStorage.setItem(MODE_KEY, 'sample');
 }
 
 export async function clearConnection(): Promise<ConnectionState> {
-  const previous = await clearSecrets();
-  if (previous) await AsyncStorage.removeItem(cacheKeyFor(previous));
+  await clearSecrets();
+  await clearPerConnectionData();
   await AsyncStorage.removeItem(MODE_KEY);
   return { mode: 'none' };
 }

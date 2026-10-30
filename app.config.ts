@@ -15,16 +15,22 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   updates: { enabled: false },
   ios: {
     bundleIdentifier: APP_ID,
+    // Must increase on every App Store Connect upload.
+    buildNumber: '1',
     supportsTablet: true,
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
-      NSAppTransportSecurity: { NSAllowsArbitraryLoads: true, NSAllowsLocalNetworking: true },
+      // NSAllowsArbitraryLoads only: on iOS 10+ adding NSAllowsLocalNetworking makes iOS ignore
+      // NSAllowsArbitraryLoads, which blocks plain HTTP to VPN/DNS hostnames (MagicDNS, nas.lan).
+      NSAppTransportSecurity: { NSAllowsArbitraryLoads: true },
       NSLocalNetworkUsageDescription:
         'Remote for Sonarr connects to your Sonarr server on your home network or VPN.',
     },
   },
   android: {
     package: APP_ID,
+    // Must increase on every Play upload.
+    versionCode: 1,
     adaptiveIcon: {
       backgroundColor: '#E6F4FE',
       foregroundImage: './assets/images/android-icon-foreground.png',

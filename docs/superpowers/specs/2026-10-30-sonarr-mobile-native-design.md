@@ -5,7 +5,7 @@ Status: draft, awaiting approval
 
 ## Intent
 
-Sonarr's web UI is built for computers and doesn't fit a phone screen at all. The existing project in this repo (a vibe-coded React web app wrapped as a PWA/TWA, with an Express proxy) is not good enough. We're replacing it with a real native app for iPhone and Android that lets someone manage their Sonarr from their phone: the shows they've added, adding new ones, downloads, and what's airing.
+Sonarr's web UI is built for computers and doesn't fit a phone screen at all. This replaces the earlier version of the app (a React web app packaged as a PWA/TWA, with an Express proxy), which didn't meet these goals. The replacement is a native app for iPhone and Android that lets someone manage their Sonarr from their phone: the shows they've added, adding new ones, downloads, and what's airing.
 
 Who it's for: the owner (an iPhone user), their friend (Android), and anyone with an Android phone or iPhone and Sonarr on a home server.
 

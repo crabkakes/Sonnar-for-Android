@@ -2,6 +2,7 @@ import { Pressable, Text } from 'react-native';
 import { act, fireEvent, screen, waitFor } from '@testing-library/react-native';
 import { SonarrError } from '../../api/errors';
 import type { Series } from '../../api/types';
+import { hashBaseUrl } from '../../connection/storage';
 import { StaleBanner } from '../../ui/Banners';
 import { renderWithProviders } from '../../../test/render';
 import { useSonarrInfiniteQuery, useSonarrMutation, useSonarrQuery } from '../hooks';
@@ -32,6 +33,32 @@ test('isStale true after a failed refetch with cached data', async () => {
   await fireEvent.press(screen.getByText('refetch'));
   await screen.findByText('count:1 stale:true');
   expect(screen.getByText("Can't reach Sonarr — showing saved data")).toBeTruthy();
+});
+
+test('stale banner hides once the active query reconnects, even if an inactive query still holds an old error', async () => {
+  const getSeries = jest
+    .fn()
+    .mockResolvedValueOnce([{ id: 1 } as Series])
+    .mockRejectedValueOnce(new SonarrError('unreachable'))
+    .mockResolvedValueOnce([{ id: 1 } as Series, { id: 2 } as Series]);
+  const { client } = await renderWithProviders(<SeriesProbe />, { api: { getSeries } });
+  await screen.findByText('count:1 stale:false');
+
+  // A query from a screen that is no longer mounted: cached data, last fetch unreachable, no observers.
+  const inactive = client.getQueryCache().build(client, { queryKey: ['other-screen', 'calendar'] });
+  await act(async () => {
+    inactive.setState({ data: [], dataUpdatedAt: 1, error: new SonarrError('unreachable'), status: 'error' });
+  });
+  expect(inactive.getObserversCount()).toBe(0);
+  expect(screen.queryByText("Can't reach Sonarr — showing saved data")).toBeNull();
+
+  await fireEvent.press(screen.getByText('refetch'));
+  await screen.findByText('count:1 stale:true');
+  expect(screen.getByText("Can't reach Sonarr — showing saved data")).toBeTruthy();
+
+  await fireEvent.press(screen.getByText('refetch'));
+  await screen.findByText('count:2 stale:false');
+  expect(screen.queryByText("Can't reach Sonarr — showing saved data")).toBeNull();
 });
 
 function MutationProbe() {
@@ -96,5 +123,5 @@ test('useSonarrInfiniteQuery pages one at a time under the identity prefix and s
   await screen.findByText('ids:1,2,3 more:false');
   expect(getHistory).toHaveBeenCalledTimes(2);
   const keys = client.getQueryCache().getAll().map((q) => q.queryKey);
-  expect(keys).toEqual([[expect.stringContaining('sonarr.test'), 'history']]);
+  expect(keys).toEqual([[hashBaseUrl('http://sonarr.test'), 'history']]);
 });

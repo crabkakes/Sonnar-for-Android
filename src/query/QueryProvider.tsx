@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { AppState, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
-import { focusManager, onlineManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { defaultShouldDehydrateQuery, focusManager, onlineManager, QueryClient, QueryClientProvider, type Query } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { connectionIdentity, useConnection } from '../connection/ConnectionProvider';
 import { cacheKeyFor } from '../connection/storage';
@@ -10,6 +10,19 @@ import { cacheKeyFor } from '../connection/storage';
 const DAY_MS = 24 * 60 * 60 * 1000;
 export const GC_TIME = 7 * DAY_MS;
 export const STALE_TIME = 30_000;
+
+/**
+ * Query kinds (the key segment after the connection identity) that are saved to disk for offline
+ * viewing. Everything else stays in memory: history and releases carry indexer download URLs with
+ * third-party API keys, and queue/lookup are volatile. Keeping the list short also keeps the
+ * persisted blob under Android's AsyncStorage row limit for large libraries.
+ */
+export const PERSISTED_QUERY_KINDS: readonly string[] = ['series', 'episodes', 'calendar', 'rootFolders', 'qualityProfiles'];
+
+export function shouldPersistQuery(query: Query): boolean {
+  const kind = query.queryKey[1];
+  return typeof kind === 'string' && PERSISTED_QUERY_KINDS.includes(kind) && defaultShouldDehydrateQuery(query);
+}
 
 export function createQueryClient(): QueryClient {
   return new QueryClient({
@@ -43,7 +56,7 @@ export function QueryProvider({ children }: { children: ReactNode }) {
   const identity = connectionIdentity(state);
   // eslint-disable-next-line react-hooks/exhaustive-deps -- a new client per connection identity is the point
   const client = useMemo(() => createQueryClient(), [identity]);
-  const persistKey = state.mode === 'live' ? cacheKeyFor(state.config.baseUrl) : null;
+  const persistKey = state.mode === 'live' ? cacheKeyFor(identity) : null;
   const persisted = useMemo(() => {
     if (!persistKey) return null;
     let retired = false;
@@ -76,7 +89,7 @@ export function QueryProvider({ children }: { children: ReactNode }) {
 
   if (persisted) {
     return (
-      <PersistQueryClientProvider key={persisted.key} client={client} persistOptions={{ persister: persisted.persister, maxAge: GC_TIME }}>
+      <PersistQueryClientProvider key={persisted.key} client={client} persistOptions={{ persister: persisted.persister, maxAge: GC_TIME, dehydrateOptions: { shouldDehydrateQuery: shouldPersistQuery } }}>
         {children}
       </PersistQueryClientProvider>
     );

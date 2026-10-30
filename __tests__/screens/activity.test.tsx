@@ -43,6 +43,24 @@ describe('activity: queue', () => {
     expect(screen.getAllByText('4 min').length).toBe(2);
   });
 
+  it('each row shows its status', async () => {
+    const items = [
+      q(1),
+      q(2, { status: 'paused' }),
+      q(3, { status: 'queued' }),
+      q(4, { status: 'completed', trackedDownloadState: 'importPending' }),
+      q(5, { status: 'completed', trackedDownloadState: 'importing' }),
+    ];
+    await renderWithProviders(<ActivityScreen />, { api: { getQueue: jest.fn(async () => queuePage(items)) } });
+    await screen.findByText('Show 1');
+    const statusOf = (id: number) => within(screen.getByTestId(`queue-row-${id}`)).getByTestId(`queue-status-${id}`);
+    expect(statusOf(1)).toHaveTextContent('Downloading');
+    expect(statusOf(2)).toHaveTextContent('Paused');
+    expect(statusOf(3)).toHaveTextContent('Queued');
+    expect(statusOf(4)).toHaveTextContent('Import pending');
+    expect(statusOf(5)).toHaveTextContent('Importing');
+  });
+
   it('empty queue shows "Nothing downloading"', async () => {
     await renderWithProviders(<ActivityScreen />);
     expect(await screen.findByText('Nothing downloading')).toBeTruthy();
