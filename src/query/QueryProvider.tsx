@@ -44,23 +44,39 @@ export function QueryProvider({ children }: { children: ReactNode }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps -- a new client per connection identity is the point
   const client = useMemo(() => createQueryClient(), [identity]);
   const persistKey = state.mode === 'live' ? cacheKeyFor(state.config.baseUrl) : null;
-  const persister = useMemo(
-    () => (persistKey ? createAsyncStoragePersister({ storage: AsyncStorage, key: persistKey }) : null),
-    [persistKey],
-  );
-
-  // When the connection changes, delete the previous connection's persisted cache.
-  const previousKey = useRef<string | null>(persistKey);
-  useEffect(() => {
-    if (previousKey.current && previousKey.current !== persistKey) {
-      void AsyncStorage.removeItem(previousKey.current);
-    }
-    previousKey.current = persistKey;
+  const persisted = useMemo(() => {
+    if (!persistKey) return null;
+    let retired = false;
+    // Once retired, throttled writes still queued in the persister are dropped,
+    // so they cannot recreate a deleted cache key.
+    const storage = {
+      getItem: (k: string) => AsyncStorage.getItem(k),
+      setItem: (k: string, v: string) => (retired ? Promise.resolve() : AsyncStorage.setItem(k, v)),
+      removeItem: (k: string) => AsyncStorage.removeItem(k),
+    };
+    return {
+      key: persistKey,
+      persister: createAsyncStoragePersister({ storage, key: persistKey }),
+      retire: () => {
+        retired = true;
+      },
+    };
   }, [persistKey]);
 
-  if (persister) {
+  // When the connection changes or is cleared, retire the previous persister and delete its cache key.
+  const previous = useRef(persisted);
+  useEffect(() => {
+    const old = previous.current;
+    if (old && old.key !== persistKey) {
+      old.retire();
+      void AsyncStorage.removeItem(old.key);
+    }
+    previous.current = persisted;
+  }, [persisted, persistKey]);
+
+  if (persisted) {
     return (
-      <PersistQueryClientProvider client={client} persistOptions={{ persister, maxAge: GC_TIME }}>
+      <PersistQueryClientProvider key={persisted.key} client={client} persistOptions={{ persister: persisted.persister, maxAge: GC_TIME }}>
         {children}
       </PersistQueryClientProvider>
     );
