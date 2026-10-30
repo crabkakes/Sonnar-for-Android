@@ -7,6 +7,7 @@ import type { Series } from '../../src/api/types';
 import { formatAirTime } from '../../src/domain/format';
 import { seriesSummary } from '../../src/domain/series';
 import { useSonarrQuery } from '../../src/query/hooks';
+import { Screen } from '../../src/ui/Screen';
 import { SampleBanner, StaleBanner } from '../../src/ui/Banners';
 import { Poster } from '../../src/ui/Poster';
 import { useTheme, type Theme } from '../../src/ui/theme';
@@ -113,7 +114,7 @@ export default function ShowsScreen() {
   }
 
   return (
-    <View style={[styles.screen, { backgroundColor: theme.bg }]}>
+    <Screen>
       <SampleBanner />
       <StaleBanner />
       <View style={[styles.header, { maxWidth: maxContentWidth, alignSelf: 'center', width: '100%' }]}>
@@ -147,12 +148,11 @@ export default function ShowsScreen() {
       <Pressable accessibilityRole="button" accessibilityLabel="Add show" onPress={() => router.push('/add' as never)} style={[styles.fab, { backgroundColor: theme.accent }]}>
         <Ionicons name="add" size={28} color="#ffffff" />
       </Pressable>
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 8, gap: 8 },
   search: { flex: 1, minHeight: 44, borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, fontSize: 16 },
   icon: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },

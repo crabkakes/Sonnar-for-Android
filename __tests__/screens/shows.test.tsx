@@ -17,6 +17,11 @@ beforeEach(() => {
 afterEach(() => jest.useRealTimers());
 
 describe('shows screen', () => {
+  it('renders inside the safe-area Screen wrapper', async () => {
+    await renderWithProviders(<ShowsScreen />);
+    expect(screen.getByTestId('screen')).toBeTruthy();
+  });
+
   it('lists series sorted by sortTitle', async () => {
     await renderWithProviders(<ShowsScreen />, {
       api: { getSeries: jest.fn(async () => [mk(1, 'Zed'), mk(2, 'Alpha'), mk(3, 'Mid')]) },
