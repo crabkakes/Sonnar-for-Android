@@ -16,6 +16,7 @@ import { userMessage } from '../src/api/errors';
 import { createLiveApi } from '../src/api/liveApi';
 import { normalizeBaseUrl } from '../src/api/url';
 import { useConnection } from '../src/connection/ConnectionProvider';
+import { Screen } from '../src/ui/Screen';
 import { useTheme } from '../src/ui/theme';
 
 type TestResult =
@@ -91,6 +92,7 @@ export default function ServerScreen() {
   const input = [styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.surface }];
 
   return (
+    <Screen>
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: theme.bg }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -174,11 +176,12 @@ export default function ServerScreen() {
         )}
       </ScrollView>
     </KeyboardAvoidingView>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  content: { padding: 16, paddingTop: 64, gap: 8 },
+  content: { padding: 16, paddingTop: 16, gap: 8 },
   title: { fontSize: 24, fontWeight: '700', marginBottom: 8 },
   label: { fontSize: 14, fontWeight: '600', marginTop: 8 },
   input: { minHeight: 48, borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, fontSize: 16 },

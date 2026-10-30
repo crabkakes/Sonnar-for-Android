@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { SonarrError, userMessage } from '../api/errors';
 import type { SonarrApi } from '../api/types';
 import { connectionIdentity, useConnection } from '../connection/ConnectionProvider';
@@ -26,6 +26,39 @@ export function useSonarrQuery<T>(
     isLoading: q.isLoading,
     error,
     isStale,
+    refetch: () => void q.refetch(),
+  };
+}
+
+/** Paged query under the same identity prefix; fetches one page at a time, never everything. */
+export function useSonarrInfiniteQuery<P>(
+  key: unknown[],
+  fn: (api: SonarrApi, page: number) => Promise<P>,
+  getNextPage: (last: P, all: P[]) => number | undefined,
+): {
+  pages: P[];
+  isLoading: boolean;
+  error?: SonarrError;
+  hasNextPage: boolean;
+  isFetchingNextPage: boolean;
+  fetchNextPage(): void;
+  refetch(): void;
+} {
+  const { state, api } = useConnection();
+  const q = useInfiniteQuery<P, Error, { pages: P[] }, unknown[], number>({
+    queryKey: [connectionIdentity(state), ...key],
+    queryFn: ({ pageParam }) => fn(api!, pageParam),
+    initialPageParam: 1,
+    getNextPageParam: (last, all) => getNextPage(last, all),
+    enabled: api !== null,
+  });
+  return {
+    pages: q.data?.pages ?? [],
+    isLoading: q.isLoading,
+    error: q.error instanceof SonarrError ? q.error : undefined,
+    hasNextPage: q.hasNextPage,
+    isFetchingNextPage: q.isFetchingNextPage,
+    fetchNextPage: () => void q.fetchNextPage(),
     refetch: () => void q.refetch(),
   };
 }

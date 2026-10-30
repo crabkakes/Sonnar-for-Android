@@ -16,3 +16,9 @@ jest.mock('expo-secure-store', () => {
     }),
   };
 });
+
+jest.mock('@expo/vector-icons', () => {
+  const { createElement } = require('react');
+  const { Text } = require('react-native');
+  return { Ionicons: ({ name }: { name: string }) => createElement(Text, null, name) };
+});

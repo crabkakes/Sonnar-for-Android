@@ -4,7 +4,7 @@ import { SonarrError } from '../../api/errors';
 import type { Series } from '../../api/types';
 import { StaleBanner } from '../../ui/Banners';
 import { renderWithProviders } from '../../../test/render';
-import { useSonarrMutation, useSonarrQuery } from '../hooks';
+import { useSonarrInfiniteQuery, useSonarrMutation, useSonarrQuery } from '../hooks';
 
 function SeriesProbe() {
   const q = useSonarrQuery(['series'], (api) => api.getSeries());
@@ -66,4 +66,35 @@ test('live mutation shows success message; failure shows the error title', async
     await fireEvent.press(screen.getByText('go'));
   });
   await waitFor(() => expect(screen.getByText("Can't reach Sonarr")).toBeTruthy());
+});
+
+function InfiniteProbe() {
+  const q = useSonarrInfiniteQuery(
+    ['history'],
+    (api, page) => api.getHistory(page, 2),
+    (last, all) => (all.reduce((n, p) => n + p.records.length, 0) < last.totalRecords ? last.page + 1 : undefined),
+  );
+  return (
+    <>
+      <Text>{`ids:${q.pages.flatMap((p) => p.records.map((r) => r.id)).join(',')} more:${q.hasNextPage}`}</Text>
+      <Pressable accessibilityRole="button" onPress={() => q.fetchNextPage()}>
+        <Text>next</Text>
+      </Pressable>
+    </>
+  );
+}
+
+test('useSonarrInfiniteQuery pages one at a time under the identity prefix and stops at the end', async () => {
+  const getHistory = jest.fn(async (page: number) => ({
+    page, pageSize: 2, totalRecords: 3,
+    records: page === 1 ? [{ id: 1 }, { id: 2 }] : [{ id: 3 }],
+  }));
+  const { client } = await renderWithProviders(<InfiniteProbe />, { api: { getHistory: getHistory as never } });
+  await screen.findByText('ids:1,2 more:true');
+  expect(getHistory).toHaveBeenCalledTimes(1);
+  await fireEvent.press(screen.getByText('next'));
+  await screen.findByText('ids:1,2,3 more:false');
+  expect(getHistory).toHaveBeenCalledTimes(2);
+  const keys = client.getQueryCache().getAll().map((q) => q.queryKey);
+  expect(keys).toEqual([[expect.stringContaining('sonarr.test'), 'history']]);
 });

@@ -36,6 +36,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     'expo-router',
     'expo-secure-store',
     'expo-localization',
+    './plugins/withAndroidReleaseSigning',
     ['expo-build-properties', { android: { usesCleartextTraffic: true } }],
     [
       'expo-splash-screen',
