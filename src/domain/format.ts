@@ -31,3 +31,19 @@ export function formatBytes(n?: number): string {
   }
   return `${v.toFixed(1)} ${units[i]}`;
 }
+
+/** '5 min ago', '3 h ago', '2 d ago', then 'Oct 1' (with the year when it isn't this one). */
+export function formatRelative(iso: string, now: Date): string {
+  const at = new Date(iso);
+  if (Number.isNaN(at.getTime())) return '—';
+  const mins = Math.floor((now.getTime() - at.getTime()) / 60_000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins} min ago`;
+  if (mins < 24 * 60) return `${Math.floor(mins / 60)} h ago`;
+  if (mins < 7 * 24 * 60) return `${Math.floor(mins / (24 * 60))} d ago`;
+  return new Intl.DateTimeFormat(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: at.getFullYear() === now.getFullYear() ? undefined : 'numeric',
+  }).format(at);
+}
