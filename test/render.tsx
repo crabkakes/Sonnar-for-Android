@@ -7,7 +7,7 @@ import { NoticeProvider } from '../src/ui/Notice';
 import { ThemeProvider } from '../src/ui/theme';
 import { createFakeApi } from './fakeApi';
 
-type Options = { api?: Partial<SonarrApi>; mode?: 'live' | 'sample' };
+type Options = { api?: Partial<SonarrApi>; mode?: 'live' | 'sample' | 'none' };
 
 /**
  * Renders `ui` with a fake connection, an in-memory query client (no persistence, no retries)
@@ -24,7 +24,9 @@ export async function renderWithProviders(ui: ReactElement, { api, mode = 'live'
   });
   const connection: Connection = {
     state:
-      mode === 'sample'
+      mode === 'none'
+        ? { mode: 'none' }
+        : mode === 'sample'
         ? { mode: 'sample' }
         : { mode: 'live', config: { baseUrl: 'http://sonarr.test', apiKey: 'test-key' } },
     api: fakeApi,

@@ -15,7 +15,6 @@ function Gate() {
       </View>
     );
   }
-  // `/server` is created in Task 5.
   if (state.mode === 'none') return <Redirect href={'/server' as never} />;
   return <Stack screenOptions={{ headerShown: false }} />;
 }
