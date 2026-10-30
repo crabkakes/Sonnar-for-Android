@@ -31,6 +31,16 @@ Local builds without the `RFS_*` variables fall back to debug signing, so `npx e
 3. The `Release` workflow lints, tests, builds, and signs the app, then creates a GitHub release with `remote-for-sonarr-vX.Y.Z.apk` attached.
 4. Download the `remote-for-sonarr-aab` artifact from the workflow run and upload the `.aab` to Play Console.
 
+## Test APK (no signing key needed)
+
+The `Build test APK` workflow builds an installable Android APK of any branch or PR, with no secrets.
+
+- **Trigger it:** Actions, Build test APK, Run workflow (pick the branch). It also runs automatically on every pull request.
+- **Download it:** open the workflow run and download the `remote-for-sonarr-test-apk-<sha>` artifact under Artifacts. It is a zip containing `app-release.apk`. Artifacts are kept for 14 days.
+- **Install it:** copy the APK to the phone and open it, allowing installs from unknown sources when Android asks.
+
+It is signed with the debug key, so it cannot update over, or be updated by, the Play Store build or a GitHub release APK. Uninstall it before installing a real release.
+
 ## 3. Releasing iOS (on the Mac)
 
 1. Bump `ios.buildNumber` in `app.config.ts` (and `version` if it changed).
@@ -58,7 +68,7 @@ The app collects no data. It talks only to the Sonarr server the user enters.
 
 ## 6. Device verification checklist
 
-The owner does this on their iPhone with a dev build (`npx expo run:ios --device` on the Mac). The friend repeats it on Android with a locally built APK. Record results in the PR.
+The owner does this on their iPhone with a dev build (`npx expo run:ios --device` on the Mac). The friend repeats it on Android with the test APK (see Test APK above). Record results in the PR.
 
 - [ ] The Local Network prompt appears with the app's text, and connecting via `http://<LAN IP>:8989` works.
 - [ ] Connecting via the VPN by IP works.

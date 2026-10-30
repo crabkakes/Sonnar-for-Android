@@ -24,6 +24,7 @@ Your phone must be able to reach Sonarr, so use it on your local network or over
 
 - App Store (iPhone) and Google Play (Android).
 - Or download the signed APK from the [GitHub Releases](../../releases) page. It uses the same signing key as the Play build.
+- Or try a test build (no signing key needed) of any PR or branch: see [Test APK](docs/RELEASING.md#test-apk-no-signing-key-needed).
 
 ## Development
 
