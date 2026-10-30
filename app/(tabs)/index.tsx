@@ -137,7 +137,7 @@ export default function ShowsScreen() {
         data={shown}
         numColumns={isWide ? columns : 1}
         keyExtractor={(s) => String(s.id)}
-        renderItem={({ item }) => <SeriesItem s={item} grid={isWide} onPress={() => router.push(`/series/${item.id}` as never)} />}
+        renderItem={({ item }) => <SeriesItem s={item} grid={isWide} onPress={() => router.push(`/series/${item.id}`)} />}
         initialNumToRender={12}
         maxToRenderPerBatch={12}
         windowSize={7}
