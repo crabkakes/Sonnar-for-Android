@@ -78,7 +78,7 @@ describe('series detail', () => {
     await open();
     await fireEvent.press(screen.getByRole('button', { name: 'Actions for episode 2x01' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Pick a release' }));
-    expect(mockPush).toHaveBeenCalledWith({ pathname: '/releases', params: { episodeId: 20 } });
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/releases', params: { episodeId: 20, seriesId: 5 } });
   });
 
   it('"Pick a release" on season navigates to /releases?seriesId=&seasonNumber=', async () => {

@@ -198,9 +198,9 @@ export default function SeriesDetailScreen() {
               target &&
               act(() =>
                 router.push(
-                  (target.kind === 'episode'
-                    ? { pathname: '/releases', params: { episodeId: target.episode.id } }
-                    : { pathname: '/releases', params: { seriesId: id, seasonNumber: target.season.seasonNumber } }) as never,
+                  target.kind === 'episode'
+                    ? { pathname: '/releases', params: { episodeId: target.episode.id, seriesId: id } }
+                    : { pathname: '/releases', params: { seriesId: id, seasonNumber: target.season.seasonNumber } },
                 ),
               )
             }
