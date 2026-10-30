@@ -1,4 +1,4 @@
-import { LayoutGrid, List, Layers, RotateCw, Search, SlidersHorizontal, Sun, Moon } from 'lucide-react';
+import { LayoutGrid, List, Layers, RotateCw, Search, SlidersHorizontal, Sun, Moon, Smartphone } from 'lucide-react';
 import { SonarrConfig } from '../types/sonarr';
 
 interface TopAppBarProps {
@@ -7,6 +7,7 @@ interface TopAppBarProps {
   isConnected: boolean;
   isConnecting: boolean;
   onOpenSettings: () => void;
+  onOpenInstallModal: () => void;
   viewMode: 'poster' | 'banner' | 'table';
   onChangeViewMode: (mode: 'poster' | 'banner' | 'table') => void;
   onRefresh: () => void;
@@ -23,6 +24,7 @@ export function TopAppBar({
   isConnected,
   isConnecting,
   onOpenSettings,
+  onOpenInstallModal,
   viewMode,
   onChangeViewMode,
   onRefresh,
@@ -86,6 +88,16 @@ export function TopAppBar({
 
         {/* Action Controls */}
         <div className="flex items-center gap-1 shrink-0">
+          {/* Install on Android button */}
+          <button
+            onClick={onOpenInstallModal}
+            className="px-2 py-1.5 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/25 text-xs font-semibold flex items-center gap-1 transition-colors"
+            title="Install app on Android / APK Info"
+          >
+            <Smartphone className="w-3.5 h-3.5" />
+            <span className="hidden xs:inline">Install</span>
+          </button>
+
           {/* Refresh Action */}
           <button
             onClick={onRefresh}

@@ -12,11 +12,13 @@ import { CalendarScreen } from './components/CalendarScreen';
 import { AddSeriesScreen } from './components/AddSeriesScreen';
 import { SystemScreen } from './components/SystemScreen';
 import { Toast, ToastMessage } from './components/Toast';
+import { InstallModal } from './components/InstallModal';
 
 export default function App() {
   const [config, setConfig] = useState<SonarrConfig>(() => sonarrApi.getConfig());
   const [currentTab, setCurrentTab] = useState<'series' | 'activity' | 'calendar' | 'add' | 'system'>('series');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [showInstallModal, setShowInstallModal] = useState(false);
 
   // Series library state
   const [seriesList, setSeriesList] = useState<Series[]>([]);
@@ -159,6 +161,7 @@ export default function App() {
         isConnected={!config.demoMode && Boolean(config.apiKey)}
         isConnecting={false}
         onOpenSettings={() => setCurrentTab('system')}
+        onOpenInstallModal={() => setShowInstallModal(true)}
         viewMode={viewMode}
         onChangeViewMode={setViewMode}
         onRefresh={() => loadSeries(true)}
@@ -350,6 +353,11 @@ export default function App() {
         onTabChange={(tab) => setCurrentTab(tab as any)}
         activeDownloadsCount={activeDownloadsCount}
       />
+
+      {/* Install on Android & APK Modal */}
+      {showInstallModal && (
+        <InstallModal onClose={() => setShowInstallModal(false)} />
+      )}
 
       {/* Toast Notification Container */}
       <Toast toast={toast} onClose={() => setToast(null)} />
