@@ -133,6 +133,28 @@ export function InstallModal({ onClose }: InstallModalProps) {
             </div>
           ) : (
             <div className="space-y-4">
+              {/* Direct APK Download Card */}
+              <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl space-y-3">
+                <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
+                  <Download className="w-5 h-5" />
+                  <span>Download Test .APK</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  A standalone signed Android APK (<code className="text-emerald-300 font-mono">sonarr-android.apk</code>) has been built for this app. You can download and install it directly on your Android device:
+                </p>
+                <a
+                  href="/sonarr-android.apk"
+                  download="sonarr-android.apk"
+                  className="w-full py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:scale-98 text-slate-950 font-bold text-sm flex items-center justify-center gap-2 transition-transform shadow-md text-center"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Download sonarr-android.apk</span>
+                </a>
+                <span className="text-[10px] text-slate-400 block text-center">
+                  Signed debug package · Android 5.0+ (API 21+) compatible
+                </span>
+              </div>
+
               <div className="p-3.5 bg-slate-950 border border-slate-800 rounded-xl space-y-1.5">
                 <span className="font-bold text-slate-200 flex items-center gap-1.5">
                   <Github className="w-4 h-4 text-slate-400" /> Automated APK Releases on GitHub

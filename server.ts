@@ -17,6 +17,14 @@ async function startServer() {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
+  // Direct Android APK file download endpoint
+  app.get('/sonarr-android.apk', (_req, res) => {
+    const apkPath = path.resolve(__dirname, 'public', 'sonarr-android.apk');
+    res.setHeader('Content-Type', 'application/vnd.android.package-archive');
+    res.setHeader('Content-Disposition', 'attachment; filename="sonarr-android.apk"');
+    res.sendFile(apkPath);
+  });
+
   // Sonarr API CORS bypass proxy endpoint
   // Allows connecting to local Sonarr servers (e.g. http://192.168.1.50:8989) from browser without CORS issues
   app.all('/api/sonarr/proxy', async (req, res) => {
