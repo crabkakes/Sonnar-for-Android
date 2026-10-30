@@ -2,6 +2,7 @@ import { Pressable, Text } from 'react-native';
 import { act, fireEvent, screen, waitFor } from '@testing-library/react-native';
 import { SonarrError } from '../../api/errors';
 import type { Series } from '../../api/types';
+import { hashBaseUrl } from '../../connection/storage';
 import { StaleBanner } from '../../ui/Banners';
 import { renderWithProviders } from '../../../test/render';
 import { useSonarrInfiniteQuery, useSonarrMutation, useSonarrQuery } from '../hooks';
@@ -96,5 +97,5 @@ test('useSonarrInfiniteQuery pages one at a time under the identity prefix and s
   await screen.findByText('ids:1,2,3 more:false');
   expect(getHistory).toHaveBeenCalledTimes(2);
   const keys = client.getQueryCache().getAll().map((q) => q.queryKey);
-  expect(keys).toEqual([[expect.stringContaining('sonarr.test'), 'history']]);
+  expect(keys).toEqual([[hashBaseUrl('http://sonarr.test'), 'history']]);
 });
